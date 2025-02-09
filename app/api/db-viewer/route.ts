@@ -22,6 +22,21 @@ export async function GET(request: Request) {
         `;
         return NextResponse.json(tables.rows);
 
+      case 'getRunNames':
+        if (!tableName) {
+          return NextResponse.json({ error: 'Table name is required' }, { status: 400 });
+        }
+        if (!isValidTableName(tableName)) {
+          return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
+        }
+        const runNames = await sql.query(
+          `SELECT DISTINCT run_name 
+           FROM "${tableName}" 
+           WHERE run_name IS NOT NULL 
+           ORDER BY run_name`
+        );
+        return NextResponse.json(runNames.rows);
+
       case 'getSchema':
         if (!tableName) {
           return NextResponse.json({ error: 'Table name is required' }, { status: 400 });

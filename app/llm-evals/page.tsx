@@ -117,8 +117,22 @@ export default function LLMEvalsViewer() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    fetchRunNames();
+  }, []); // Fetch run names once on mount
+
+  useEffect(() => {
     fetchData();
   }, [currentPage, pageSize, selectedRun]); // Refetch when filters change
+
+  const fetchRunNames = async () => {
+    try {
+      const response = await fetch('/api/db-viewer?action=getRunNames&table=llm_evals');
+      const result = await response.json();
+      setRunNames(result.map((row: { run_name: string }) => row.run_name));
+    } catch (error) {
+      console.error('Error fetching run names:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -146,10 +160,6 @@ export default function LLMEvalsViewer() {
       setData(processedData);
       setTotalItems(result.totalCount);
       setTotalPages(result.totalPages);
-
-      // Extract unique run names with proper typing
-      const runs = [...new Set(processedData.map((row: LLMEval) => row.run_name))].filter((name): name is string => typeof name === 'string');
-      setRunNames(runs);
 
       // Calculate min/max distinct answers for the current page
       const distinctCounts = processedData.map((row: LLMEval) => 

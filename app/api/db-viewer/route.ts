@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         
         // Use identifier function to safely quote the table name
         const data = await sql.query(
-          `SELECT * FROM "${tableName}" LIMIT 100`
+          `SELECT * FROM "${tableName}"`
         );
         return NextResponse.json(data.rows);
 

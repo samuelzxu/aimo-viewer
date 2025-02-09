@@ -27,6 +27,80 @@ interface RawLLMEval {
   reasoning: string;
 }
 
+interface PaginationControlsProps {
+  currentPage: number;
+  totalPages: number;
+  pageInput: string;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPageInputChange: (value: string) => void;
+  onPageInputBlur: () => void;
+}
+
+function PaginationControls({
+  currentPage,
+  totalPages,
+  pageInput,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageInputChange,
+  onPageInputBlur
+}: PaginationControlsProps) {
+  return (
+    <div className="flex items-center justify-between py-4">
+      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        Showing {Math.min(totalItems, (currentPage - 1) * pageSize + 1)} to {Math.min(totalItems, currentPage * pageSize)} of {totalItems} results
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          ««
+        </button>
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          «
+        </button>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-600 dark:text-slate-300">Page</span>
+          <input
+            type="text"
+            value={pageInput}
+            onChange={(e) => onPageInputChange(e.target.value)}
+            onBlur={onPageInputBlur}
+            className="w-16 p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-center"
+          />
+          <span className="text-sm text-slate-600 dark:text-slate-300">of {totalPages}</span>
+        </div>
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          »
+        </button>
+        <button
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          »»
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function LLMEvalsViewer() {
   const router = useRouter();
   const [data, setData] = useState<LLMEval[]>([]);
@@ -36,6 +110,9 @@ export default function LLMEvalsViewer() {
   const [minDistinctAnswers, setMinDistinctAnswers] = useState<number>(0);
   const [maxDistinctAnswers, setMaxDistinctAnswers] = useState<number>(0);
   const [distinctAnswersRange, setDistinctAnswersRange] = useState<[number, number]>([0, 0]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(30);
+  const [pageInput, setPageInput] = useState('1');
 
   useEffect(() => {
     fetchData();
@@ -80,6 +157,12 @@ export default function LLMEvalsViewer() {
     return matchesRun && matchesDistinct;
   });
 
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleRowClick = (uuid: string) => {
     router.push(`/llm-evals/${uuid}`);
   };
@@ -92,6 +175,31 @@ export default function LLMEvalsViewer() {
   const handleMaxDistinctChange = (value: string) => {
     const newMax = Math.max(distinctAnswersRange[0], Number(value));
     setDistinctAnswersRange([distinctAnswersRange[0], newMax]);
+  };
+
+  const handlePageChange = (page: number) => {
+    const validPage = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(validPage);
+    setPageInput(validPage.toString());
+  };
+
+  const handlePageInputChange = (value: string) => {
+    setPageInput(value);
+    const page = parseInt(value);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePageInputBlur = () => {
+    const page = parseInt(pageInput);
+    if (isNaN(page) || page < 1) {
+      setPageInput('1');
+      setCurrentPage(1);
+    } else if (page > totalPages) {
+      setPageInput(totalPages.toString());
+      setCurrentPage(totalPages);
+    }
   };
 
   return (
@@ -156,7 +264,19 @@ export default function LLMEvalsViewer() {
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
-          <div className="overflow-x-auto">
+          {/* Top Pagination */}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageInput={pageInput}
+            pageSize={pageSize}
+            totalItems={filteredData.length}
+            onPageChange={handlePageChange}
+            onPageInputChange={handlePageInputChange}
+            onPageInputBlur={handlePageInputBlur}
+          />
+
+          <div className="overflow-x-auto border-y border-slate-200 dark:border-slate-600">
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-600">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-700">
@@ -170,7 +290,7 @@ export default function LLMEvalsViewer() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
-                {filteredData.map((row) => (
+                {paginatedData.map((row) => (
                   <tr 
                     key={row.uuid} 
                     className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
@@ -206,6 +326,18 @@ export default function LLMEvalsViewer() {
               </tbody>
             </table>
           </div>
+
+          {/* Bottom Pagination */}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageInput={pageInput}
+            pageSize={pageSize}
+            totalItems={filteredData.length}
+            onPageChange={handlePageChange}
+            onPageInputChange={handlePageInputChange}
+            onPageInputBlur={handlePageInputBlur}
+          />
         </div>
       )}
     </div>

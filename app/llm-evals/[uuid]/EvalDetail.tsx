@@ -105,6 +105,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
   const [conversations, setConversations] = useState<ChatConversation[][]>([]);
   const [loading, setLoading] = useState(true);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [expandedConversations, setExpandedConversations] = useState<Set<number>>(new Set());
 
   const isChatMessage = (value: unknown): value is ChatMessage => {
     return typeof value === 'object' && value !== null && 'role' in value;
@@ -293,50 +294,74 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
           </h2>
           
           <div className="space-y-8">
-            {conversations.map((conversation, convIndex) => (
-              <div 
-                key={convIndex}
-                className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4"
-              >
-                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">
-                  Conversation {convIndex + 1}
-                </h3>
-                <div className="space-y-4">
-                  {conversation.map((chat, chatIndex) => (
-                    chat.messages.map((message, messageIndex) => (
-                      <div
-                        key={`${chatIndex}-${messageIndex}`}
-                        className={`flex gap-4 ${
-                          message.role === 'assistant' 
-                            ? 'bg-blue-50 dark:bg-blue-900/20' 
-                            : 'bg-gray-50 dark:bg-slate-600/20'
-                        } rounded-lg p-4`}
-                      >
-                        <div className="flex-shrink-0">
-                          <div className={`
-                            w-8 h-8 rounded-full flex items-center justify-center
-                            ${message.role === 'assistant'
-                              ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-200'
-                              : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-200'
-                            }
-                          `}>
-                            {message.role === 'assistant' ? 'A' : 'U'}
+            {conversations.map((conversation, convIndex) => {
+              const isExpanded = expandedConversations.has(convIndex);
+              const messageCount = conversation.reduce((acc, chat) => acc + chat.messages.length, 0);
+              
+              return (
+                <div 
+                  key={convIndex}
+                  className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4"
+                >
+                  <button
+                    onClick={() => {
+                      const newExpanded = new Set(expandedConversations);
+                      if (isExpanded) {
+                        newExpanded.delete(convIndex);
+                      } else {
+                        newExpanded.add(convIndex);
+                      }
+                      setExpandedConversations(newExpanded);
+                    }}
+                    className="w-full flex items-center justify-between text-left"
+                  >
+                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      Conversation {convIndex + 1} ({messageCount} messages)
+                    </h3>
+                    <span className="text-slate-400 dark:text-slate-500">
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="space-y-4 mt-4">
+                      {conversation.map((chat, chatIndex) => (
+                        chat.messages.map((message, messageIndex) => (
+                          <div
+                            key={`${chatIndex}-${messageIndex}`}
+                            className={`flex gap-4 ${
+                              message.role === 'assistant' 
+                                ? 'bg-blue-50 dark:bg-blue-900/20' 
+                                : 'bg-gray-50 dark:bg-slate-600/20'
+                            } rounded-lg p-4`}
+                          >
+                            <div className="flex-shrink-0">
+                              <div className={`
+                                w-8 h-8 rounded-full flex items-center justify-center
+                                ${message.role === 'assistant'
+                                  ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-200'
+                                  : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-200'
+                                }
+                              `}>
+                                {message.role === 'assistant' ? 'A' : 'U'}
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                {message.role.charAt(0).toUpperCase() + message.role.slice(1)}
+                              </p>
+                              <div className="prose dark:prose-invert max-w-none">
+                                {renderTextWithLatex(message.content)}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                            {message.role.charAt(0).toUpperCase() + message.role.slice(1)}
-                          </p>
-                          <div className="prose dark:prose-invert max-w-none">
-                            {renderTextWithLatex(message.content)}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ))}
+                        ))
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

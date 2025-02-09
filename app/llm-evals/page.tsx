@@ -84,6 +84,16 @@ export default function LLMEvalsViewer() {
     router.push(`/llm-evals/${uuid}`);
   };
 
+  const handleMinDistinctChange = (value: string) => {
+    const newMin = Math.max(0, Math.min(Number(value), distinctAnswersRange[1]));
+    setDistinctAnswersRange([newMin, distinctAnswersRange[1]]);
+  };
+
+  const handleMaxDistinctChange = (value: string) => {
+    const newMax = Math.max(distinctAnswersRange[0], Number(value));
+    setDistinctAnswersRange([distinctAnswersRange[0], newMax]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
       <h1 className="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-100">LLM Evaluations</h1>
@@ -110,35 +120,31 @@ export default function LLMEvalsViewer() {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Distinct Answers Range
             </label>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col flex-1">
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1">Min</label>
                 <input
                   type="number"
-                  min={minDistinctAnswers}
+                  min={0}
                   max={distinctAnswersRange[1]}
                   value={distinctAnswersRange[0]}
-                  onChange={(e) => setDistinctAnswersRange([
-                    Math.min(Number(e.target.value), distinctAnswersRange[1]),
-                    distinctAnswersRange[1]
-                  ])}
-                  className="w-24 p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  onChange={(e) => handleMinDistinctChange(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
-                <span className="text-slate-500 dark:text-slate-400">to</span>
+              </div>
+              <div className="flex flex-col flex-1">
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1">Max</label>
                 <input
                   type="number"
                   min={distinctAnswersRange[0]}
-                  max={maxDistinctAnswers}
                   value={distinctAnswersRange[1]}
-                  onChange={(e) => setDistinctAnswersRange([
-                    distinctAnswersRange[0],
-                    Math.max(Number(e.target.value), distinctAnswersRange[0])
-                  ])}
-                  className="w-24 p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  onChange={(e) => handleMaxDistinctChange(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Range: {minDistinctAnswers} - {maxDistinctAnswers}
-              </div>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              Range: {minDistinctAnswers} - {maxDistinctAnswers}
             </div>
           </div>
         </div>

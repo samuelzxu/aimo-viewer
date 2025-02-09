@@ -45,11 +45,48 @@ export async function GET(request: Request) {
           return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
         }
         
-        // Use identifier function to safely quote the table name
-        const data = await sql.query(
-          `SELECT * FROM "${tableName}"`
+        const page = parseInt(searchParams.get('page') || '1');
+        const pageSize = parseInt(searchParams.get('pageSize') || '30');
+        const offset = (page - 1) * pageSize;
+        const runName = searchParams.get('runName');
+        
+        let whereClause = '';
+        const whereConditions = [];
+        const params: string[] = [];
+        
+        if (runName) {
+          whereConditions.push(`run_name = $${params.length + 1}`);
+          params.push(runName);
+        }
+        
+        if (whereConditions.length > 0) {
+          whereClause = `WHERE ${whereConditions.join(' AND ')}`;
+        }
+        
+        // Get total count first
+        const countResult = await sql.query(
+          `SELECT COUNT(*) as total FROM "${tableName}" ${whereClause}`,
+          params
         );
-        return NextResponse.json(data.rows);
+        const totalCount = parseInt(countResult.rows[0].total);
+        
+        // Then get paginated data
+        const data = await sql.query(
+          `SELECT * FROM "${tableName}" 
+           ${whereClause}
+           ORDER BY exec_time DESC 
+           LIMIT ${pageSize} 
+           OFFSET ${offset}`,
+          params
+        );
+        
+        return NextResponse.json({
+          rows: data.rows,
+          totalCount,
+          currentPage: page,
+          pageSize,
+          totalPages: Math.ceil(totalCount / pageSize)
+        });
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

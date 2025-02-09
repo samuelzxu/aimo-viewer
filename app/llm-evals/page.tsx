@@ -113,28 +113,45 @@ export default function LLMEvalsViewer() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(30);
   const [pageInput, setPageInput] = useState('1');
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, pageSize, selectedRun]); // Refetch when filters change
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/db-viewer?action=getData&table=llm_evals');
-      const rawData = await response.json();
+      const params = new URLSearchParams({
+        action: 'getData',
+        table: 'llm_evals',
+        page: currentPage.toString(),
+        pageSize: pageSize.toString()
+      });
+
+      if (selectedRun) {
+        params.append('runName', selectedRun);
+      }
+
+      const response = await fetch(`/api/db-viewer?${params}`);
+      const result = await response.json();
+      
       // Convert runtime_s to number and handle other fields
-      const processedData = rawData.map((row: RawLLMEval) => ({
+      const processedData = result.rows.map((row: RawLLMEval) => ({
         ...row,
         runtime_s: row.runtime_s ? Number(row.runtime_s) : 0,
         extracted_answers: Array.isArray(row.extracted_answers) ? row.extracted_answers : []
       }));
+      
       setData(processedData);
+      setTotalItems(result.totalCount);
+      setTotalPages(result.totalPages);
 
       // Extract unique run names with proper typing
       const runs = [...new Set(processedData.map((row: LLMEval) => row.run_name))].filter((name): name is string => typeof name === 'string');
       setRunNames(runs);
 
-      // Calculate min/max distinct answers
+      // Calculate min/max distinct answers for the current page
       const distinctCounts = processedData.map((row: LLMEval) => 
         new Set(row.extracted_answers).size
       );
@@ -149,19 +166,6 @@ export default function LLMEvalsViewer() {
       setLoading(false);
     }
   };
-
-  const filteredData = data.filter(row => {
-    const matchesRun = !selectedRun || row.run_name === selectedRun;
-    const distinctCount = new Set(row.extracted_answers).size;
-    const matchesDistinct = distinctCount >= distinctAnswersRange[0] && distinctCount <= distinctAnswersRange[1];
-    return matchesRun && matchesDistinct;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   const handleRowClick = (uuid: string) => {
     router.push(`/llm-evals/${uuid}`);
@@ -270,7 +274,7 @@ export default function LLMEvalsViewer() {
             totalPages={totalPages}
             pageInput={pageInput}
             pageSize={pageSize}
-            totalItems={filteredData.length}
+            totalItems={totalItems}
             onPageChange={handlePageChange}
             onPageInputChange={handlePageInputChange}
             onPageInputBlur={handlePageInputBlur}
@@ -290,7 +294,7 @@ export default function LLMEvalsViewer() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
-                {paginatedData.map((row) => (
+                {data.map((row) => (
                   <tr 
                     key={row.uuid} 
                     className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
@@ -333,7 +337,7 @@ export default function LLMEvalsViewer() {
             totalPages={totalPages}
             pageInput={pageInput}
             pageSize={pageSize}
-            totalItems={filteredData.length}
+            totalItems={totalItems}
             onPageChange={handlePageChange}
             onPageInputChange={handlePageInputChange}
             onPageInputBlur={handlePageInputBlur}

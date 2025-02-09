@@ -189,9 +189,9 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
 
   const fetchData = async () => {
     try {
-      const response = await fetch(`/api/db-viewer?action=getData&table=llm_evals`);
+      const response = await fetch(`/api/db-viewer?action=getData&table=llm_evals&uuid=${uuid}`);
       const result = await response.json();
-      const rawEvalData = result.rows.find((row: LLMEval) => row.uuid === uuid);
+      const rawEvalData = result.rows[0]; // Since we're fetching by UUID, we'll only get one row
       
       if (rawEvalData) {
         // Process the data to ensure correct types
@@ -200,6 +200,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
           runtime_s: rawEvalData.runtime_s ? Number(rawEvalData.runtime_s) : 0,
           extracted_answers: Array.isArray(rawEvalData.extracted_answers) ? rawEvalData.extracted_answers : []
         };
+        
         setData(evalData);
         
         if (evalData.reasoning) {

@@ -60,10 +60,31 @@ export async function GET(request: Request) {
           return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
         }
         
+        const uuid = searchParams.get('uuid');
+        
+        // If UUID is provided, fetch single evaluation
+        if (uuid) {
+          const singleResult = await sql.query(
+            `SELECT * FROM "${tableName}" WHERE uuid = $1`,
+            [uuid]
+          );
+          return NextResponse.json({
+            rows: singleResult.rows,
+            totalCount: singleResult.rows.length,
+            currentPage: 1,
+            pageSize: 1,
+            totalPages: 1
+          });
+        }
+        
+        // Otherwise, handle paginated list view
         const page = parseInt(searchParams.get('page') || '1');
         const pageSize = parseInt(searchParams.get('pageSize') || '30');
         const offset = (page - 1) * pageSize;
         const runName = searchParams.get('runName');
+        const minDistinct = searchParams.get('minDistinct');
+        const maxDistinct = searchParams.get('maxDistinct');
+        const questionType = searchParams.get('questionType');
         
         let whereClause = '';
         const whereConditions = [];
@@ -72,6 +93,20 @@ export async function GET(request: Request) {
         if (runName) {
           whereConditions.push(`run_name = $${params.length + 1}`);
           params.push(runName);
+        }
+        
+        if (questionType) {
+          whereConditions.push(`p_id LIKE $${params.length + 1}`);
+          params.push(`%${questionType}`);
+        }
+        
+        if (minDistinct) {
+          whereConditions.push(`(SELECT COUNT(DISTINCT x) FROM unnest(extracted_answers) as x) >= $${params.length + 1}`);
+          params.push(minDistinct);
+        }
+        if (maxDistinct) {
+          whereConditions.push(`(SELECT COUNT(DISTINCT x) FROM unnest(extracted_answers) as x) <= $${params.length + 1}`);
+          params.push(maxDistinct);
         }
         
         if (whereConditions.length > 0) {

@@ -1,101 +1,147 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface TableInfo {
+  table_name: string;
+}
+
+interface ColumnInfo {
+  column_name: string;
+  data_type: string;
+}
+
+interface TableRow {
+  [key: string]: string | number | boolean | null;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [tables, setTables] = useState<TableInfo[]>([]);
+  const [selectedTable, setSelectedTable] = useState<string>('');
+  const [schema, setSchema] = useState<ColumnInfo[]>([]);
+  const [data, setData] = useState<TableRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    fetchTables();
+  }, []);
+
+  useEffect(() => {
+    if (selectedTable) {
+      fetchTableInfo();
+    }
+  }, [selectedTable]);
+
+  const fetchTables = async () => {
+    try {
+      const response = await fetch('/api/db-viewer?action=getTables');
+      const data = await response.json();
+      setTables(data);
+    } catch (error) {
+      console.error('Error fetching tables:', error);
+    }
+  };
+
+  const fetchTableInfo = async () => {
+    setLoading(true);
+    try {
+      const [schemaResponse, dataResponse] = await Promise.all([
+        fetch(`/api/db-viewer?action=getSchema&table=${selectedTable}`),
+        fetch(`/api/db-viewer?action=getData&table=${selectedTable}`)
+      ]);
+      
+      const schemaData = await schemaResponse.json();
+      const rowData = await dataResponse.json();
+      
+      setSchema(schemaData);
+      setData(rowData);
+    } catch (error) {
+      console.error('Error fetching table info:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
+      <h1 className="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-100">Database Viewer</h1>
+      
+      <div className="mb-8">
+        <select
+          className="w-full max-w-xs p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          value={selectedTable}
+          onChange={(e) => setSelectedTable(e.target.value)}
+        >
+          <option value="">Select a table</option>
+          {tables.map((table) => (
+            <option key={table.table_name} value={table.table_name}>
+              {table.table_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="text-center text-slate-600 dark:text-slate-300">
+          <div className="animate-pulse">Loading...</div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : selectedTable ? (
+        <div className="space-y-8">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">Schema</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-600">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-700">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Column Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Data Type</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
+                  {schema.map((col) => (
+                    <tr key={col.column_name} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{col.column_name}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{col.data_type}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">Data</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-600">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-700">
+                    {schema.map((col) => (
+                      <th key={col.column_name} className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">
+                        {col.column_name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
+                  {data.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      {schema.map((col) => (
+                        <td key={col.column_name} className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">
+                          {String(row[col.column_name] ?? '')}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-sm p-8">
+          Select a table to view its schema and data
+        </div>
+      )}
     </div>
   );
 }

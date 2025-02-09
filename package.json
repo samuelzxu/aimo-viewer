@@ -9,17 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/postgres": "latest",
+    "katex": "^0.16.21",
     "next": "15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "vercel": "^41.0.2",
-    "@vercel/postgres": "latest"
+    "react-katex": "^3.0.1",
+    "vercel": "^41.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-katex": "^3.0.4",
     "eslint": "^9",
     "eslint-config-next": "15.1.6",
     "postcss": "^8",

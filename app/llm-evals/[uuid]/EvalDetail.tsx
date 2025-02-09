@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import 'katex/dist/katex.min.css';
+import { InlineMath, BlockMath } from 'react-katex';
 
 interface Message {
   role: string;
@@ -27,6 +29,74 @@ interface LLMEval {
   label: number;
   extracted_answers: number[];
   reasoning: string;
+}
+
+// Function to process text and render LaTeX
+function renderTextWithLatex(text: string) {
+  // First split by display math
+  const displayMathRegex = /\\?\[([^]*?)\\?\]/g;
+  const displayParts = text.split(displayMathRegex);
+  
+  return (
+    <div className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+      {displayParts.map((part, index) => {
+        // For display math parts (odd indices in the split)
+        if (index % 2 === 1) {
+          try {
+            return (
+              <div key={index} className="my-4 flex justify-center">
+                <BlockMath>{part}</BlockMath>
+              </div>
+            );
+          } catch (error) {
+            console.error('LaTeX parsing error:', error);
+            return <span key={index}>\[{part}\]</span>;
+          }
+        }
+        
+        // For regular text parts (even indices), first process \(...\) style
+        const inlineParensRegex = /\\?\((.*?)\\?\)/g;
+        const inlineParensParts = part.split(inlineParensRegex);
+        
+        return (
+          <span key={index}>
+            {inlineParensParts.map((parensPart, parensIndex) => {
+              // Handle \(...\) parts
+              if (parensIndex % 2 === 1) {
+                try {
+                  return <InlineMath key={`parens-${parensIndex}`}>{parensPart}</InlineMath>;
+                } catch (error) {
+                  console.error('LaTeX parsing error:', error);
+                  return <span key={`parens-${parensIndex}`}>\({parensPart}\)</span>;
+                }
+              }
+              
+              // For non-\(...\) parts, process $...$ style
+              const inlineDollarRegex = /\$(.*?)\$/g;
+              const inlineDollarParts = parensPart.split(inlineDollarRegex);
+              
+              return (
+                <span key={`parens-${parensIndex}`}>
+                  {inlineDollarParts.map((dollarPart, dollarIndex) => {
+                    if (dollarIndex % 2 === 0) {
+                      return <span key={`dollar-${dollarIndex}`}>{dollarPart}</span>;
+                    } else {
+                      try {
+                        return <InlineMath key={`dollar-${dollarIndex}`}>{dollarPart}</InlineMath>;
+                      } catch (error) {
+                        console.error('LaTeX parsing error:', error);
+                        return <span key={`dollar-${dollarIndex}`}>${dollarPart}$</span>;
+                      }
+                    }
+                  })}
+                </span>
+              );
+            })}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function EvalDetail({ uuid }: { uuid: string }) {
@@ -258,9 +328,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                             {message.role.charAt(0).toUpperCase() + message.role.slice(1)}
                           </p>
                           <div className="prose dark:prose-invert max-w-none">
-                            <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                              {message.content}
-                            </p>
+                            {renderTextWithLatex(message.content)}
                           </div>
                         </div>
                       </div>

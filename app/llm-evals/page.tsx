@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 interface LLMEval {
@@ -101,7 +101,7 @@ function PaginationControls({
   );
 }
 
-export default function LLMEvalsViewer() {
+function LLMEvalsViewerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<LLMEval[]>([]);
@@ -426,5 +426,19 @@ export default function LLMEvalsViewer() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LLMEvalsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
+        <div className="text-center text-slate-600 dark:text-slate-300">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      </div>
+    }>
+      <LLMEvalsViewerContent />
+    </Suspense>
   );
 } 

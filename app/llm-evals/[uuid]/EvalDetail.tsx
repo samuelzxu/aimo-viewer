@@ -292,6 +292,9 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                   <span
                     key={index}
                     className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-md text-sm text-slate-700 dark:text-slate-300"
+                    style={{
+                      whiteSpace: 'pre-wrap'
+                    }}
                   >
                     {answer}
                   </span>

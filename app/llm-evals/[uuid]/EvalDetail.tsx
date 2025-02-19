@@ -34,6 +34,7 @@ interface LLMEval {
 // Function to process text and render LaTeX
 function renderTextWithLatex(text: string) {
   // First split by display math
+  // Matches \\\[, \\\], \(, \), and $,
   const displayMathRegex = /\\?\[([^]*?)\\?\]/g;
   const displayParts = text.split(displayMathRegex);
   
@@ -239,7 +240,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
       <div className="max-w-6xl mx-auto">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/llm-evals')}
           className="mb-6 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 flex items-center gap-2"
         >
           ← Back to List

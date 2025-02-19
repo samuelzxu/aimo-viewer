@@ -104,6 +104,7 @@ export async function GET(request: Request) {
         const maxDistinct = searchParams.get("maxDistinct");
         const questionType = searchParams.get("questionType");
         const correctness = searchParams.get("correctness");
+        const labelInAnswers = searchParams.get("labelInAnswers");
 
         let whereClause = "";
         const whereConditions = [];
@@ -123,6 +124,10 @@ export async function GET(request: Request) {
           whereConditions.push(`prediction = label`);
         } else if (correctness === "incorrect") {
           whereConditions.push(`prediction != label`);
+        }
+
+        if (labelInAnswers === "true") {
+          whereConditions.push(`label = ANY(extracted_answers)`);
         }
 
         if (minDistinct) {

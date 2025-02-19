@@ -109,10 +109,12 @@ function LLMEvalsViewerContent() {
   const [runNames, setRunNames] = useState<string[]>([]);
   const [selectedRun, setSelectedRun] = useState<string>(searchParams.get('run') || '');
   const [selectedQuestionType, setSelectedQuestionType] = useState<string>(searchParams.get('questionType') || '');
+  const [correctness, setCorrectness] = useState<string>(searchParams.get('correctness') || '');
   const [distinctAnswersRange, setDistinctAnswersRange] = useState<[number, number]>([
     parseInt(searchParams.get('minDistinct') || '0'),
     parseInt(searchParams.get('maxDistinct') || '100')
   ]);
+  const [labelInAnswers, setLabelInAnswers] = useState(searchParams.get('labelInAnswers') === 'true');
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') || '1'));
   const [pageSize] = useState(30);
   const [pageInput, setPageInput] = useState(searchParams.get('page') || '1');
@@ -138,7 +140,7 @@ function LLMEvalsViewerContent() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, selectedRun, selectedQuestionType, distinctAnswersRange]); // Refetch when filters change
+  }, [currentPage, pageSize, selectedRun, selectedQuestionType, distinctAnswersRange, labelInAnswers, correctness]); // Refetch when filters change
 
   const fetchRunNames = async () => {
     try {
@@ -167,9 +169,17 @@ function LLMEvalsViewerContent() {
         params.append('questionType', selectedQuestionType);
       }
 
+      if (correctness) {
+        params.append('correctness', correctness);
+      }
+
       // Append distinct answers filter parameters
       params.append('minDistinct', distinctAnswersRange[0].toString());
       params.append('maxDistinct', distinctAnswersRange[1].toString());
+
+      if (labelInAnswers) {
+        params.append('labelInAnswers', 'true');
+      }
 
       const response = await fetch(`/api/db-viewer?${params}`);
       const result = await response.json();
@@ -258,42 +268,77 @@ function LLMEvalsViewerContent() {
     });
   };
 
+  const handleLabelInAnswersChange = (checked: boolean) => {
+    setLabelInAnswers(checked);
+    setCurrentPage(1);
+    updateUrlParams({
+      labelInAnswers: checked ? 'true' : '',
+      page: '1'
+    });
+  };
+
+  const handleCorrectnessChange = (value: string) => {
+    setCorrectness(value);
+    setCurrentPage(1);
+    updateUrlParams({
+      correctness: value,
+      page: '1'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
       <h1 className="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-100">LLM Evaluations</h1>
       
-      <div className="mb-8 space-y-4">
-        <div className="flex gap-4 flex-wrap">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6 mb-4">
+        <div className="flex flex-wrap gap-6">
           <div className="flex-1 min-w-[200px] max-w-xs">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Filter by Run Name
+              Run Name
             </label>
             <select
-              className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               value={selectedRun}
               onChange={(e) => handleRunChange(e.target.value)}
+              className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="">All Runs</option>
-              {runNames.map((run) => (
-                <option key={run} value={run}>{run}</option>
+              {runNames.map((name) => (
+                <option key={name} value={name}>{name}</option>
               ))}
             </select>
           </div>
 
           <div className="flex-1 min-w-[200px] max-w-xs">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Filter by Question Type
+              Question Type
             </label>
             <select
-              className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               value={selectedQuestionType}
               onChange={(e) => handleQuestionTypeChange(e.target.value)}
+              className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="">All Types</option>
-              <option value="amc">AMC</option>
+              <option value="lv1">Level 1</option>
+              <option value="lv2">Level 2</option>
+              <option value="lv3">Level 3</option>
               <option value="lv4">Level 4</option>
               <option value="lv5">Level 5</option>
               <option value="aime">AIME</option>
+            </select>
+          </div>
+
+          <div className="flex-1 min-w-[200px] max-w-xs">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Correctness
+            </label>
+            <select
+              value={correctness}
+              onChange={(e) => handleCorrectnessChange(e.target.value)}
+              className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="">Both</option>
+              <option value="correct">Correct</option>
+              <option value="incorrect">Incorrect</option>
             </select>
           </div>
 
@@ -303,7 +348,7 @@ function LLMEvalsViewerContent() {
             </label>
             <div className="flex items-center gap-2">
               <div className="flex flex-col flex-1">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1">Min</label>
+                
                 <input
                   type="number"
                   min={0}
@@ -311,9 +356,10 @@ function LLMEvalsViewerContent() {
                   onChange={(e) => handleMinDistinctChange(e.target.value)}
                   className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1">Min</label>
               </div>
               <div className="flex flex-col flex-1">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1">Max</label>
+                
                 <input
                   type="number"
                   min={distinctAnswersRange[0]}
@@ -321,10 +367,28 @@ function LLMEvalsViewerContent() {
                   onChange={(e) => handleMaxDistinctChange(e.target.value)}
                   className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1">Max</label>
               </div>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              Range: {distinctAnswersRange[0]} - {distinctAnswersRange[1]}
+          </div>
+
+          <div className="flex-1 min-w-[200px] max-w-xs">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Label in Answers
+            </label>
+            <div className="flex items-center mt-2">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={labelInAnswers}
+                  onChange={(e) => handleLabelInAnswersChange(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                <span className="ms-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Label in extracted answers
+                </span>
+              </label>
             </div>
           </div>
         </div>

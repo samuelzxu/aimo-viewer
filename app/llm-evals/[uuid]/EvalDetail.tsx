@@ -107,6 +107,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
   const [loading, setLoading] = useState(true);
   const [parseError, setParseError] = useState<string | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<number>>(new Set());
+  const [showRawText, setShowRawText] = useState<Set<string>>(new Set());
 
   const isChatMessage = (value: unknown): value is ChatMessage => {
     return typeof value === 'object' && value !== null && 'role' in value;
@@ -120,6 +121,16 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
       newExpanded.add(index);
     }
     setExpandedConvs(newExpanded);
+  };
+
+  const toggleRawText = (messageId: string) => {
+    const newShowRawText = new Set(showRawText);
+    if (newShowRawText.has(messageId)) {
+      newShowRawText.delete(messageId);
+    } else {
+      newShowRawText.add(messageId);
+    }
+    setShowRawText(newShowRawText);
   };
 
   useEffect(() => {
@@ -350,12 +361,29 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                             </div>
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                              {message.role.charAt(0).toUpperCase() + message.role.slice(1)}
-                            </p>
+                            <div className="flex justify-between items-center mb-1">
+                              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                {message.role.charAt(0).toUpperCase() + message.role.slice(1)}
+                              </p>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRawText(`${chatIndex}-${messageIndex}`);
+                                }}
+                                className="text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors"
+                              >
+                                {showRawText.has(`${chatIndex}-${messageIndex}`) ? 'Show Rendered' : 'Show Raw'}
+                              </button>
+                            </div>
                             <div className="prose dark:prose-invert max-w-none">
                               <div className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                                {renderTextWithLatex(message.content)}
+                                {showRawText.has(`${chatIndex}-${messageIndex}`) ? (
+                                  <pre className="text-sm bg-slate-100 dark:bg-slate-800 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words max-w-full">
+                                    {message.content}
+                                  </pre>
+                                ) : (
+                                  renderTextWithLatex(message.content)
+                                )}
                               </div>
                             </div>
                           </div>

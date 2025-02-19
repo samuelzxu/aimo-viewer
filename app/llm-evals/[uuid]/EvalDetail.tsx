@@ -107,7 +107,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
   const [loading, setLoading] = useState(true);
   const [parseError, setParseError] = useState<string | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<number>>(new Set());
-  const [showRawText, setShowRawText] = useState<Set<string>>(new Set());
+  const [showRenderedText, setShowRenderedText] = useState<Set<string>>(new Set());
 
   const isChatMessage = (value: unknown): value is ChatMessage => {
     return typeof value === 'object' && value !== null && 'role' in value;
@@ -124,13 +124,14 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
   };
 
   const toggleRawText = (messageId: string) => {
-    const newShowRawText = new Set(showRawText);
-    if (newShowRawText.has(messageId)) {
-      newShowRawText.delete(messageId);
+    
+    const newShowRenderedText = new Set(showRenderedText);
+    if (newShowRenderedText.has(messageId)) {
+      newShowRenderedText.delete(messageId);
     } else {
-      newShowRawText.add(messageId);
+      newShowRenderedText.add(messageId);
     }
-    setShowRawText(newShowRawText);
+    setShowRenderedText(newShowRenderedText);
   };
 
   useEffect(() => {
@@ -323,11 +324,11 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
             {conversations.map((conversation, convIndex) => (
               <div 
                 key={convIndex}
-                className="bg-slate-50 dark:bg-slate-700/50 rounded-lg"
+                className="bg-slate-50 dark:bg-slate-700/50 rounded-lg relative"
               >
                 <button
                   onClick={() => toggleConversation(convIndex)}
-                  className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded-lg"
+                  className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded-lg sticky top-0 z-10 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-600"
                 >
                   <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
                     Conversation {convIndex + 1}
@@ -361,7 +362,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                             </div>
                           </div>
                           <div className="flex-1">
-                            <div className="flex justify-between items-center mb-1">
+                            <div className="flex gap-4 items-center mb-1">
                               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                                 {message.role.charAt(0).toUpperCase() + message.role.slice(1)}
                               </p>
@@ -372,17 +373,17 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                                 }}
                                 className="text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors"
                               >
-                                {showRawText.has(`${chatIndex}-${messageIndex}`) ? 'Show Rendered' : 'Show Raw'}
+                                {showRenderedText.has(`${chatIndex}-${messageIndex}`) ? 'Show Raw' : 'Show Rendered'}
                               </button>
                             </div>
                             <div className="prose dark:prose-invert max-w-none">
                               <div className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                                {showRawText.has(`${chatIndex}-${messageIndex}`) ? (
+                                {showRenderedText.has(`${chatIndex}-${messageIndex}`) ? (
+                                  renderTextWithLatex(message.content)
+                                ) : (
                                   <pre className="text-sm bg-slate-100 dark:bg-slate-800 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words max-w-full">
                                     {message.content}
                                   </pre>
-                                ) : (
-                                  renderTextWithLatex(message.content)
                                 )}
                               </div>
                             </div>

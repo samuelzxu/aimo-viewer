@@ -328,7 +328,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
               >
                 <button
                   onClick={() => toggleConversation(convIndex)}
-                  className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded-lg sticky top-0 z-10 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-600"
+                  className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded-lg sticky top-0 z-10 bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600"
                 >
                   <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
                     Conversation {convIndex + 1}

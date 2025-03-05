@@ -288,7 +288,7 @@ function LLMEvalsViewerContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
-      <h1 className="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-100">LLM Evaluations</h1>
+      <h1 className="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-100">LLM Evaluations by Samuel Xu</h1>
       
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6 mb-4">
         <div className="flex flex-wrap gap-6">

@@ -31,6 +31,13 @@ interface LLMEval {
   reasoning: string;
 }
 
+// Function to extract boxed answers from text
+function extractBoxedAnswers(text: string): string[] {
+  const boxedRegex = /\\boxed\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g;
+  const matches = [...text.matchAll(boxedRegex)];
+  return matches.map(match => match[1]);
+}
+
 // Function to process text and render LaTeX
 function renderTextWithLatex(text: string) {
   // First split by display math
@@ -108,6 +115,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
   const [parseError, setParseError] = useState<string | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<number>>(new Set());
   const [showRenderedText, setShowRenderedText] = useState<Set<string>>(new Set());
+  const [conversationBoxedAnswers, setConversationBoxedAnswers] = useState<Map<number, string[]>>(new Map());
 
   const isChatMessage = (value: unknown): value is ChatMessage => {
     return typeof value === 'object' && value !== null && 'role' in value;
@@ -139,6 +147,30 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
       fetchData();
     }
   }, [uuid]);
+
+  useEffect(() => {
+    // Extract boxed answers from each conversation
+    const boxedAnswersMap = new Map<number, string[]>();
+    
+    conversations.forEach((conversation, convIndex) => {
+      const allBoxedAnswers: string[] = [];
+      
+      conversation.forEach(chat => {
+        chat.messages.forEach(message => {
+          if (message.role === 'assistant') {
+            const boxedAnswers = extractBoxedAnswers(message.content);
+            allBoxedAnswers.push(...boxedAnswers);
+          }
+        });
+      });
+      
+      if (allBoxedAnswers.length > 0) {
+        boxedAnswersMap.set(convIndex, allBoxedAnswers);
+      }
+    });
+    
+    setConversationBoxedAnswers(boxedAnswersMap);
+  }, [conversations]);
 
   const parseReasoning = (reasoning: string): ChatConversation[][] => {
     try {
@@ -330,9 +362,22 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                   onClick={() => toggleConversation(convIndex)}
                   className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100 dark:hover:bg-slate-600/50 transition-colors rounded-lg sticky top-0 z-10 bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600"
                 >
-                  <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Conversation {convIndex + 1}
-                  </h3>
+                  <div className="flex flex-row gap-2 items-start">
+                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      Conversation {convIndex + 1}
+                    </h3>
+                    {!expandedConvs.has(convIndex) && conversationBoxedAnswers.has(convIndex) && (
+                        conversationBoxedAnswers.get(convIndex)?.map((answer, answerIndex) => (
+                          <span
+                            key={answerIndex}
+                            className="px-2 py-1 bg-blue-100 dark:bg-blue-800/30 rounded-md text-xs text-blue-700 dark:text-blue-300 max-w-xs truncate"
+                            title={answer}
+                          >
+                            {answer.length > 30 ? `${answer.substring(0, 30)}...` : answer}
+                          </span>
+                        ))
+                    )}
+                  </div>
                   <div className="text-slate-400 dark:text-slate-500">
                     {expandedConvs.has(convIndex) ? '−' : '+'}
                   </div>

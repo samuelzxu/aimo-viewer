@@ -73,6 +73,7 @@ function PaginationControls({
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-600 dark:text-slate-300">Page</span>
           <input
+            title="Page number"
             type="text"
             value={pageInput}
             onChange={(e) => onPageInputChange(e.target.value)}
@@ -297,6 +298,7 @@ function LLMEvalsViewerContent() {
               Run Name
             </label>
             <select
+              title="Run name"
               value={selectedRun}
               onChange={(e) => handleRunChange(e.target.value)}
               className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -313,6 +315,7 @@ function LLMEvalsViewerContent() {
               Question Type
             </label>
             <select
+              title="Question type"
               value={selectedQuestionType}
               onChange={(e) => handleQuestionTypeChange(e.target.value)}
               className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -332,6 +335,7 @@ function LLMEvalsViewerContent() {
               Correctness
             </label>
             <select
+              title="Correctness"
               value={correctness}
               onChange={(e) => handleCorrectnessChange(e.target.value)}
               className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -350,6 +354,7 @@ function LLMEvalsViewerContent() {
               <div className="flex flex-col flex-1">
                 
                 <input
+                  title="Min distinct answers"
                   type="number"
                   min={0}
                   value={distinctAnswersRange[0]}
@@ -361,6 +366,7 @@ function LLMEvalsViewerContent() {
               <div className="flex flex-col flex-1">
                 
                 <input
+                  title="Max distinct answers"
                   type="number"
                   min={distinctAnswersRange[0]}
                   value={distinctAnswersRange[1]}
@@ -379,6 +385,7 @@ function LLMEvalsViewerContent() {
             <div className="flex items-center mt-2">
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
+                  title="Label in extracted answers"
                   type="checkbox"
                   checked={labelInAnswers}
                   onChange={(e) => handleLabelInAnswersChange(e.target.checked)}

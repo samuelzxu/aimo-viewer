@@ -304,7 +304,29 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
               <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400">UUID</h2>
-              <p className="text-slate-800 dark:text-slate-200">{data.uuid}</p>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  defaultValue={data.uuid}
+                  className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      router.push(`/llm-evals/${e.currentTarget.value}`);
+                    }
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    const input = e.currentTarget.parentElement?.querySelector('input');
+                    if (input) {
+                      router.push(`/llm-evals/${input.value}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Resubmit
+                </button>
+              </div>
             </div>
             <div>
               <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400">Run Name</h2>

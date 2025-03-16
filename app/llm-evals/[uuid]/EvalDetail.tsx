@@ -364,7 +364,7 @@ export default function EvalDetail({ uuid }: { uuid: string }) {
                 >
                   <div className="flex flex-row gap-2 items-start">
                     <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                      Conversation {convIndex + 1}
+                      Conversation {convIndex + 1} ({Math.round(conversation[conversation.length - 1].messages.slice(-1)[0].content.length / 4)})
                     </h3>
                     {!expandedConvs.has(convIndex) && conversationBoxedAnswers.has(convIndex) && (
                         conversationBoxedAnswers.get(convIndex)?.map((answer, answerIndex) => (
